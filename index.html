@@ -1,0 +1,277 @@
+<html>
+    <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+    </head>
+    <body>
+        <div>
+            <form>
+                <input type="checkbox" name="ADM" value="ADM" checked> ADM<br>
+                <input type="checkbox" name="ALJ" value="ALJ" checked> ALJ<br>
+                <input type="checkbox" name="CG" value="CG" checked> CG<br><br>
+            </form>
+        </div>
+        <canvas id="myChart"></canvas>
+    </body>
+</html>
+
+<script>
+
+    // JSON data
+
+    let data  = [
+    {
+    "mip": {
+        "id": 259,
+        "name": "Abu Dhabi Media",
+        "code": "ADM"
+    },
+    "briefNetSpendInEuro": 14000,
+    "postNetSpendInEuro": 0,
+    "proposalSpendInEuro": 10465
+    },
+    {
+    "mip": {
+        "id": 264,
+        "name": "Aljazeera",
+        "code": "ALJ"
+    },
+    "briefNetSpendInEuro": 20123,
+    "postNetSpendInEuro": 5032,
+    "proposalSpendInEuro": 9000
+    },
+    {
+    "mip": {
+        "id": 265,
+        "name": "Choueiri Group",
+        "code": "CG"
+    },
+    "briefNetSpendInEuro": 4500,
+    "postNetSpendInEuro": 1234,
+    "proposalSpendInEuro": null
+    }
+    ]
+
+    // add event listeners to checkboxes - when selected show information
+    var checkboxes = document.querySelectorAll('input[type=checkbox]');
+    
+    // remove any dummy data and add data back
+    // data = relData
+    function addData(chart, label, data) {
+        console.log(label);
+        let num;
+        if(label === 'ADM'){
+            num = 0;
+        }
+        if(label === 'ALJ'){
+            num = 1;
+        }
+        if(label === 'CG'){
+            num = 2;
+        }
+        
+
+    chart.data.datasets.forEach((dataset) => {
+       if(dataset.label === 'Brief') {
+           dataset.data.splice(num, 1);
+           dataset.data.splice(num, 0, data.brief);
+           
+       };
+       if(dataset.label === 'Proposal') {
+           dataset.data.splice(num, 1);
+           dataset.data.splice(num, 0, data.proposal);
+       };
+       if(dataset.label === 'Postlog Spend') {
+           dataset.data.splice(num, 1);
+           dataset.data.splice(num, 0, data.post);
+       };
+
+    });
+    chart.update();
+}
+    // remove data and add empty dummy data
+    function removeData(chart, obj) {
+        
+        let num;
+        if(obj.name === 'ADM'){
+            num = 0;
+        }
+        if(obj.name === 'ALJ'){
+            num = 1;
+        }
+        if(obj.name === 'CG'){
+            num = 2;
+        }
+    
+    chart.data.datasets.forEach((dataset) => {
+        if(dataset.label === 'Brief') {
+           dataset.data.splice(num, 1);
+           dataset.data.splice(num, 0, 0);
+       };
+       if(dataset.label === 'Proposal') {
+           dataset.data.splice(num, 1);
+           dataset.data.splice(num, 0, 0);
+       };
+       if(dataset.label === 'Postlog Spend') {
+           dataset.data.splice(num, 1);
+           dataset.data.splice(num, 0, 0);
+       };
+    });
+    chart.update();
+}
+
+    // for each checkbox add event listener for change
+    Array.from(checkboxes).forEach(checkbox => {
+    checkbox.addEventListener('change', (event) => {
+            // 
+            let obj = rel_Data.find(obj => obj.name == event.srcElement.name);
+            
+
+        if (event.target.checked) {
+            addData(chart, obj.name, obj);
+        } else {
+            removeData(chart, obj)
+    }
+
+    })});
+
+    // take info from data and manipulate into a form that can be read by chart
+    var rel_Data = data.map(function(item) { 
+    return { 
+        "name": item.mip.code, 
+        "brief": item.briefNetSpendInEuro, 
+        "post": item.postNetSpendInEuro,
+        "proposal": item.proposalSpendInEuro || 0,
+    }; 
+    });
+
+     // Get the context of the canvas element we want to select
+    var ctx = document.getElementById('myChart').getContext('2d');
+
+    let briefData = {
+                label: "Brief",
+                backgroundColor: 'rgb(0, 99, 132)',
+                borderColor: 'rgb(0, 99, 132)',
+                data: [rel_Data[0].brief, rel_Data[1].brief, rel_Data[2].brief],
+            }
+
+    let proposalData = {
+                label: "Proposal",
+                backgroundColor: 'rgb(125, 99, 132)',
+                borderColor: 'rgb(125, 99, 132)',
+                data: [rel_Data[0].proposal, rel_Data[1].proposal, rel_Data[2].proposal],
+            }
+
+    let spendData = {
+                label: "Postlog Spend",
+                backgroundColor: 'rgb(255, 99, 132)',
+                borderColor: 'rgb(255, 99, 132)',
+                data: [rel_Data[0].post, rel_Data[1].post, rel_Data[2].post],
+            }
+
+    var cashData = {
+            labels: [rel_Data[0].name, rel_Data[1].name, rel_Data[2].name],
+            datasets: [briefData, proposalData, spendData]
+        }
+    
+    // Instantiate a new chart using 'data' (defined below)
+    var chart = new Chart(ctx, {
+        // The type of chart we want to create
+        type: 'bar',
+
+        // The data for our dataset
+        data: cashData,
+
+        // Configuration options go here
+        options: {
+            legend: {
+                display: true,
+                labels: {
+                        fontColor: 'rgb(0, 0, 0)'
+                }
+            },
+
+            tooltips: {
+            // Disable the on-canvas tooltip
+            enabled: false,
+            // Overrides the global setting
+        mode: 'label',
+
+            custom: function(tooltipModel) {
+                // Tooltip Element
+                var tooltipEl = document.getElementById('chartjs-tooltip');
+                
+
+                // Create element on first render
+                if (!tooltipEl) {
+                    tooltipEl = document.createElement('div');
+                    tooltipEl.id = 'chartjs-tooltip';
+                    tooltipEl.innerHTML = "<table></table>";
+                    document.body.appendChild(tooltipEl);
+                }
+
+                // Hide if no tooltip
+                if (tooltipModel.opacity === 0) {
+                    tooltipEl.style.opacity = 0;
+                    return;
+                }
+
+                // Set caret Position
+                tooltipEl.classList.remove('above', 'below', 'no-transform');
+                if (tooltipModel.yAlign) {
+                    tooltipEl.classList.add(tooltipModel.yAlign);
+                } else {
+                    tooltipEl.classList.add('no-transform');
+                }
+
+                function getBody(bodyItem) {
+                    return bodyItem.lines;
+                }
+
+                // Set Text
+                if (tooltipModel.body) {
+                    var titleLines = tooltipModel.title || [];
+                    var bodyLines = tooltipModel.body.map(getBody);
+                    var innerHtml = '<thead>';
+
+                    titleLines.forEach(function(title) {
+                        innerHtml += '<tr><th>' + title + '</th></tr>';
+                    });
+                    innerHtml += '</thead><tbody>';
+
+                    bodyLines.forEach(function(body, i) {
+                        var colors = tooltipModel.labelColors[i];
+                        var style = 'background:' + colors.backgroundColor;
+                        style += '; border-color:' + colors.borderColor;
+                        style += '; border-width: 2px';
+                        var span = '<span style="' + style + '"></span>';
+                        innerHtml += '<tr><td>' + span + body + '€</td></tr>';
+                    });
+                    innerHtml += '</tbody>';
+
+                    var tableRoot = tooltipEl.querySelector('table');
+                    tableRoot.innerHTML = innerHtml;
+                }
+
+                // `this` will be the overall tooltip
+                var position = this._chart.canvas.getBoundingClientRect();
+
+                // Display, position, and set styles for font
+                tooltipEl.style.opacity = 1;
+                tooltipEl.style.position = 'absolute';
+                tooltipEl.style.left = position.left + window.pageXOffset + tooltipModel.caretX + 'px';
+                tooltipEl.style.top = position.top + window.pageYOffset + tooltipModel.caretY + 'px';
+                tooltipEl.style.fontFamily = tooltipModel._bodyFontFamily;
+                tooltipEl.style.fontSize = tooltipModel.bodyFontSize + 'px';
+                tooltipEl.style.fontStyle = tooltipModel._bodyFontStyle;
+                tooltipEl.style.padding = tooltipModel.yPadding + 'px ' + tooltipModel.xPadding + 'px';
+                tooltipEl.style.pointerEvents = 'none';
+                tooltipEl.style.backgroundColor = 'rgba(211, 211, 211, 0.7)';
+                tooltipEl.style.borderColor = 'rgba(10, 10, 10)';
+            }
+        }
+        }
+    });
+
+
+</script>
+
